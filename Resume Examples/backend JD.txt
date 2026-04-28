@@ -1,0 +1,8 @@
+Looking for a Backend Engineer with experience in building scalable APIs.
+
+Requirements:
+- Proficiency in Python and Flask or Django
+- Experience with REST APIs
+- Knowledge of databases like MySQL or PostgreSQL
+- Experience with Docker and cloud platforms
+- Understanding of system design principles

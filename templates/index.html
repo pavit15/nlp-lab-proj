@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RecruitIQ : AI Resume Screener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Variables ──────────────────────────────────────────────────── */
+    :root {
+      --bg:       #0a0c10;
+      --surface:  #111318;
+      --border:   #1e2230;
+      --accent:   #4fffb0;
+      --accent2:  #00c9ff;
+      --warn:     #ffb347;
+      --danger:   #ff6b6b;
+      --text:     #e8eaf0;
+      --muted:    #6b7185;
+      --radius:   14px;
+      --font-h:   'Syne', sans-serif;
+      --font-b:   'DM Sans', sans-serif;
+    }
+
+    /* ── Reset ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-b);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid noise background ──────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(79,255,176,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,201,255,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    header {
+      padding: 40px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+    .logo {
+      font-family: var(--font-h);
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+    .tagline {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Hero ───────────────────────────────────────────────────────── */
+    .hero { margin-bottom: 48px; }
+    .hero h1 {
+      font-family: var(--font-h);
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p { color: var(--muted); font-size: 1.05rem; max-width: 560px; line-height: 1.7; }
+
+    /* ── NLP badges ─────────────────────────────────────────────────── */
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .badge {
+      background: rgba(79,255,176,0.08);
+      border: 1px solid rgba(79,255,176,0.2);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    /* ── Card ───────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+      transition: border-color 0.2s;
+    }
+    .card:focus-within { border-color: rgba(79,255,176,0.4); }
+
+    .section-label {
+      font-family: var(--font-h);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Form Elements ──────────────────────────────────────────────── */
+    label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+    textarea, input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: 0.92rem;
+      padding: 14px 16px;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    textarea:focus, input[type="text"]:focus {
+      border-color: rgba(79,255,176,0.5);
+      box-shadow: 0 0 0 3px rgba(79,255,176,0.08);
+    }
+    textarea { min-height: 140px; }
+
+    /* ── File Drop Zone ─────────────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(79,255,176,0.04);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+    .drop-icon { font-size: 2rem; margin-bottom: 8px; }
+    .drop-zone p { color: var(--muted); font-size: 0.88rem; }
+    .drop-zone p strong { color: var(--accent); }
+    #file-list { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .file-chip {
+      background: rgba(79,255,176,0.1);
+      border: 1px solid rgba(79,255,176,0.25);
+      color: var(--accent);
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Resume text blocks ─────────────────────────────────────────── */
+    .resume-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .resume-block input { margin-bottom: 10px; }
+    .remove-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255,107,107,0.15);
+      border: none;
+      color: var(--danger);
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .remove-btn:hover { background: rgba(255,107,107,0.3); }
+
+    /* ── Buttons ────────────────────────────────────────────────────── */
+    .btn {
+      font-family: var(--font-h);
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 12px 24px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0a0c10;
+      width: 100%;
+      padding: 16px;
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,255,176,0.2); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+    /* ── Divider ────────────────────────────────────────────────────── */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin: 20px 0;
+    }
+    .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Loader ─────────────────────────────────────────────────────── */
+    #loader {
+      display: none;
+      text-align: center;
+      padding: 48px 0;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loader p { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── Results ────────────────────────────────────────────────────── */
+    #results { display: none; }
+    .results-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .results-header h2 {
+      font-family: var(--font-h);
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+    .results-count {
+      background: rgba(79,255,176,0.1);
+      border: 1px solid rgba(79,255,176,0.2);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    /* JD skills row */
+    .jd-skills-row { margin-bottom: 28px; }
+    .jd-skills-row p { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .skill-tag {
+      background: rgba(0,201,255,0.1);
+      border: 1px solid rgba(0,201,255,0.25);
+      color: var(--accent2);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    /* ── Result Card ────────────────────────────────────────────────── */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeUp 0.4s ease both;
+    }
+    .result-card:hover { border-color: rgba(79,255,176,0.3); transform: translateY(-2px); }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    .result-card.rank-1 { border-color: rgba(79,255,176,0.4); }
+    .result-card.rank-2 { border-color: rgba(0,201,255,0.25); }
+    .result-card.rank-3 { border-color: rgba(255,179,71,0.25); }
+
+    .card-top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+    .rank-badge {
+      font-family: var(--font-h);
+      font-weight: 800;
+      font-size: 0.75rem;
+      min-width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .rank-1 .rank-badge { background: rgba(79,255,176,0.15); color: var(--accent); }
+    .rank-2 .rank-badge { background: rgba(0,201,255,0.12); color: var(--accent2); }
+    .rank-3 .rank-badge { background: rgba(255,179,71,0.12); color: var(--warn); }
+    .rank-other .rank-badge { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+    .card-title-row { flex: 1; }
+    .resume-name {
+      font-family: var(--font-h);
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .resume-preview { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+    /* Score gauge */
+    .score-block { text-align: right; flex-shrink: 0; }
+    .score-num {
+      font-family: var(--font-h);
+      font-weight: 800;
+      font-size: 1.9rem;
+      line-height: 1;
+    }
+    .score-num.high { color: var(--accent); }
+    .score-num.mid  { color: var(--accent2); }
+    .score-num.low  { color: var(--warn); }
+    .score-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* Progress bar */
+    .score-bar-wrap {
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .score-bar {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+
+    /* Matched / Missing / Extra skill sections */
+    .skill-section { margin-bottom: 16px; }
+    .skill-section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .skill-section-label .count-pill {
+      background: rgba(255,255,255,0.07);
+      border-radius: 999px;
+      padding: 1px 8px;
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    .label-matched { color: var(--accent); }
+    .label-missing  { color: var(--danger); }
+    .label-extra    { color: var(--accent2); }
+
+    /* Matched skill chips with context tooltip */
+    .match-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(79,255,176,0.12);
+      border: 1px solid rgba(79,255,176,0.3);
+      color: var(--accent);
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 6px;
+      margin: 2px;
+      cursor: default;
+      position: relative;
+    }
+    .match-tag .ctx-tip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1d26;
+      border: 1px solid rgba(79,255,176,0.2);
+      color: var(--text);
+      font-size: 0.72rem;
+      font-weight: 400;
+      line-height: 1.5;
+      padding: 8px 12px;
+      border-radius: 8px;
+      width: 260px;
+      white-space: normal;
+      z-index: 10;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+    .match-tag .ctx-tip em { color: var(--accent); font-style: normal; font-weight: 600; }
+    .match-tag:hover .ctx-tip { display: block; }
+
+    .missing-tag {
+      display: inline-block;
+      background: rgba(255,107,107,0.09);
+      border: 1px solid rgba(255,107,107,0.25);
+      color: var(--danger);
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 6px;
+      margin: 2px;
+    }
+    .extra-tag {
+      display: inline-block;
+      background: rgba(0,201,255,0.09);
+      border: 1px solid rgba(0,201,255,0.22);
+      color: var(--accent2);
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 6px;
+      margin: 2px;
+    }
+
+    /* Coverage bar */
+    .coverage-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .coverage-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .coverage-bar-wrap { flex: 1; height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .coverage-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+    .coverage-pct { font-family: var(--font-h); font-weight: 700; font-size: 0.9rem; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+
+    /* Collapsible detail toggle */
+    .toggle-detail {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-family: var(--font-b);
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: all 0.15s;
+    }
+    .toggle-detail:hover { border-color: var(--accent); color: var(--accent); }
+    .detail-panel { display: none; margin-top: 12px; }
+
+    /* Suggestions */
+    .suggestions-row { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .suggestions-title {
+      font-family: var(--font-h);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--warn);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .suggestion-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .suggestion-item.priority-high   { border-left: 3px solid var(--danger); }
+    .suggestion-item.priority-medium { border-left: 3px solid var(--warn); }
+    .suggestion-item.priority-low    { border-left: 3px solid var(--accent2); }
+    .suggestion-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .suggestion-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .suggestion-detail { font-size: 0.76rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── Pipeline section ───────────────────────────────────────────── */
+    .pipeline { margin: 60px 0 40px; }
+    .pipeline h2 { font-family: var(--font-h); font-size: 1.4rem; font-weight: 800; margin-bottom: 24px; }
+    .pipeline-steps { display: flex; gap: 0; flex-wrap: wrap; }
+    .step {
+      flex: 1;
+      min-width: 120px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 18px 16px;
+      position: relative;
+      text-align: center;
+    }
+    .step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .step:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent);
+      font-size: 1.1rem;
+      z-index: 2;
+      background: var(--bg);
+      padding: 0 2px;
+    }
+    .step-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .step-name { font-family: var(--font-h); font-weight: 700; font-size: 0.78rem; color: var(--text); }
+    .step-desc { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Footer ─────────────────────────────────────────────────────── */
+    footer { text-align: center; padding: 40px 0; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 48px; }
+    footer strong { color: var(--accent); }
+
+    /* ── Error ──────────────────────────────────────────────────────── */
+    .error-box {
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.3);
+      color: var(--danger);
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .step:not(:last-child)::after { display: none; }
+      .step { border-radius: var(--radius) !important; margin-bottom: 4px; }
+      .card-top { flex-direction: column; }
+      .score-block { text-align: left; }
+      .suggestions-row { padding: 10px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">Recruit<span>IQ</span></div>
+    <div class="tagline">NLP-Powered Resume Screening Engine</div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Screen Resumes with<br><em>Artificial Intelligence</em></h1>
+    <p>Upload resumes and a job description. Our NLP pipeline preprocesses, vectorizes, and ranks candidates by relevance instantly.</p>
+    <div class="badges">
+      <span class="badge">TF-IDF</span>
+      <span class="badge">Cosine Similarity</span>
+      <span class="badge">Tokenization</span>
+      <span class="badge">Lemmatization</span>
+      <span class="badge">Keyword Extraction</span>
+      <span class="badge">Precision / Recall</span>
+    </div>
+  </section>
+
+  <!-- Error box -->
+  <div class="error-box" id="error-box"></div>
+
+  <!-- Form -->
+  <form id="screen-form" enctype="multipart/form-data">
+
+    <!-- Job Description -->
+    <div class="card">
+      <div class="section-label">Step 1 : Job Description</div>
+      <label for="jd">Paste the job description below</label>
+      <textarea id="jd" name="job_description" placeholder="e.g. We are looking for a Python Developer with experience in machine learning, Flask, REST APIs, scikit-learn, and SQL databases. Strong communication skills required." required></textarea>
+    </div>
+
+    <!-- Resume Upload -->
+    <div class="card">
+      <div class="section-label">Step 2 : Upload Resumes</div>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" name="resumes[]" id="file-input" multiple accept=".pdf,.txt" />
+        <div class="drop-icon">📄</div>
+        <p><strong>Click to upload</strong> or drag & drop</p>
+        <p style="margin-top:4px">PDF or TXT files accepted</p>
+      </div>
+      <div id="file-list"></div>
+    </div>
+
+    <!-- OR Divider -->
+    <div class="or-divider">OR paste resume text directly</div>
+
+    <!-- Pasted Resumes -->
+    <div class="card">
+      <div class="section-label">Step 2 (alternative) : Paste Resume Text</div>
+      <div id="resume-blocks">
+        <div class="resume-block">
+          <input type="text" name="resume_names[]" placeholder="Candidate name (e.g. John Doe)" />
+          <textarea name="resume_texts[]" placeholder="Paste resume text here..." style="min-height:120px"></textarea>
+        </div>
+      </div>
+      <button type="button" class="btn btn-secondary" onclick="addResumeBlock()" style="margin-top:4px">
+        + Add Another Resume
+      </button>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary" id="submit-btn">
+      ⚡ Screen Resumes
+    </button>
+
+  </form>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <p>Running NLP pipeline... preprocessing → vectorizing → ranking</p>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-header">
+      <h2>Screening Results</h2>
+      <span class="results-count" id="results-count"></span>
+    </div>
+
+    <!-- JD Skills -->
+    <div class="jd-skills-row">
+      <p>🎯 Skills detected in Job Description</p>
+      <div class="skill-tags" id="jd-skills-row"></div>
+    </div>
+
+    <!-- Cards -->
+    <div id="result-cards"></div>
+  </div>
+
+  <!-- NLP Pipeline Visual -->
+  <section class="pipeline">
+    <h2>How It Works : The NLP Pipeline</h2>
+    <div class="pipeline-steps">
+      <div class="step">
+        <div class="step-icon">📥</div>
+        <div class="step-name">Input</div>
+        <div class="step-desc">Resume + Job Description text</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🧹</div>
+        <div class="step-name">Preprocess</div>
+        <div class="step-desc">Tokenize · Stopwords · Lemmatize</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">📊</div>
+        <div class="step-name">TF-IDF</div>
+        <div class="step-desc">Vectorize tokens into feature matrix</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔗</div>
+        <div class="step-name">Similarity</div>
+        <div class="step-desc">Cosine similarity score</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🏆</div>
+        <div class="step-name">Rank</div>
+        <div class="step-desc">Sort by relevance score</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Built for <strong>NLP Lab Project</strong> · TF-IDF + Cosine Similarity · Flask + Python
+  </footer>
+
+</div>
+
+<!-- ── JavaScript ──────────────────────────────────────────────────────── -->
+<script>
+  /* ── File upload UI ──────────────────────────────────────────────── */
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const fileList  = document.getElementById('file-list');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    fileInput.files = e.dataTransfer.files;
+    renderFileList(fileInput.files);
+  });
+  fileInput.addEventListener('change', () => renderFileList(fileInput.files));
+
+  function renderFileList(files) {
+    fileList.innerHTML = '';
+    for (const f of files) {
+      const chip = document.createElement('div');
+      chip.className = 'file-chip';
+      chip.innerHTML = `📄 ${f.name} <span style="color:var(--muted);font-size:0.7rem">(${(f.size/1024).toFixed(1)} KB)</span>`;
+      fileList.appendChild(chip);
+    }
+  }
+
+  /* ── Add resume text block ───────────────────────────────────────── */
+  function addResumeBlock() {
+    const block = document.createElement('div');
+    block.className = 'resume-block';
+    block.innerHTML = `
+      <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✕</button>
+      <input type="text" name="resume_names[]" placeholder="Candidate name" />
+      <textarea name="resume_texts[]" placeholder="Paste resume text here..." style="min-height:120px"></textarea>`;
+    document.getElementById('resume-blocks').appendChild(block);
+  }
+
+  /* ── Form submit ─────────────────────────────────────────────────── */
+  document.getElementById('screen-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    clearError();
+    showLoader(true);
+    document.getElementById('results').style.display = 'none';
+
+    const fd = new FormData(e.target);
+
+    try {
+      const resp = await fetch('/screen', {
+  method: 'POST',
+  body: fd
+});
+
+let data;
+try {
+  data = await resp.json();
+} catch (e) {
+  const text = await resp.text();
+  throw new Error("Server returned non-JSON response:\n" + text.substring(0, 200));
+}
+      showLoader(false);
+
+      if (!resp.ok || data.error) {
+        showError(data.error || 'Server error. Please try again.');
+        return;
+      }
+      renderResults(data);
+    } catch (err) {
+      showLoader(false);
+      showError('Network error: ' + err.message);
+    }
+  });
+
+  /* ── Render results ──────────────────────────────────────────────── */
+  function renderResults(data) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.style.display = 'block';
+
+    document.getElementById('results-count').textContent = `${data.total} candidate${data.total !== 1 ? 's' : ''}`;
+
+    // JD Skills
+    const jdRow = document.getElementById('jd-skills-row');
+    jdRow.innerHTML = data.jd_skills.length
+      ? data.jd_skills.map(s => `<span class="skill-tag">${s}</span>`).join('')
+      : '<span style="color:var(--muted);font-size:0.82rem">No common tech skills detected</span>';
+
+    // Cards
+    const cardsDiv = document.getElementById('result-cards');
+    cardsDiv.innerHTML = '';
+
+    data.results.forEach((r, i) => {
+      const rankClass  = r.rank <= 3 ? `rank-${r.rank}` : 'rank-other';
+      const scoreClass = r.score >= 50 ? 'high' : r.score >= 25 ? 'mid' : 'low';
+      const delay      = i * 80;
+      const cmp        = r.comparison || {};
+      const matched    = cmp.matched  || [];
+      const missing    = cmp.missing  || [];
+      const extra      = cmp.extra    || [];
+      const coverage   = cmp.coverage != null ? cmp.coverage : 0;
+
+      // Matched chips with hover context tooltip
+      const matchedHTML = matched.length
+        ? matched.map(m => {
+            const ctx = m.context
+              ? highlightSkillInContext(escHtml(m.context), escHtml(m.skill))
+              : '';
+            const tip = ctx
+              ? `<span class="ctx-tip">Found in resume: ${ctx}</span>`
+              : '';
+            return `<span class="match-tag">&#10003; ${escHtml(m.skill)}${tip}</span>`;
+          }).join('')
+        : '<span style="color:var(--muted);font-size:0.8rem;font-style:italic">No skill matches found</span>';
+
+      const missingHTML = missing.length
+        ? missing.map(s => `<span class="missing-tag">&#10007; ${escHtml(s)}</span>`).join('')
+        : '<span style="color:var(--muted);font-size:0.8rem;font-style:italic">None. All JD skills found!</span>';
+
+      const extraHTML = extra.length
+        ? extra.map(s => `<span class="extra-tag">+ ${escHtml(s)}</span>`).join('')
+        : '<span style="color:var(--muted);font-size:0.8rem;font-style:italic">No additional skills detected</span>';
+
+      const card = document.createElement('div');
+      card.className = `result-card ${rankClass}`;
+      card.style.animationDelay = `${delay}ms`;
+
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="rank-badge">#${r.rank}</div>
+          <div class="card-title-row">
+            <div class="resume-name">${escHtml(r.name)}</div>
+            <div class="resume-preview">${escHtml(r.preview)}${r.preview.length >= 299 ? '&hellip;' : ''}</div>
+          </div>
+          <div class="score-block">
+            <div class="score-num ${scoreClass}">${r.score}%</div>
+            <div class="score-label">Match Score</div>
+          </div>
+        </div>
+
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width: 0%" data-target="${Math.min(r.score, 100)}"></div>
+        </div>
+
+        <div class="coverage-row">
+          <span class="coverage-label">JD Skill Coverage</span>
+          <div class="coverage-bar-wrap">
+            <div class="coverage-bar" style="width:0%" data-target="${coverage}"></div>
+          </div>
+          <span class="coverage-pct">${coverage.toFixed(0)}%</span>
+          <span style="font-size:0.72rem;color:var(--muted)">${matched.length}/${r.jd_skills.length} skills</span>
+        </div>
+
+        <div class="skill-section">
+          <div class="skill-section-label label-matched">
+            &#10003; Matched Skills
+            <span class="count-pill">${matched.length}</span>
+          </div>
+          <div>${matchedHTML}</div>
+          <div style="font-size:0.68rem;color:var(--muted);margin-top:6px">Hover a skill to see where it appears in the resume</div>
+        </div>
+
+        <button class="toggle-detail" onclick="toggleDetail(this)">&#9660; Show gap analysis</button>
+        <div class="detail-panel">
+
+          <div class="skill-section" style="margin-top:12px">
+            <div class="skill-section-label label-missing">
+              &#10007; Missing from Resume
+              <span class="count-pill">${missing.length}</span>
+            </div>
+            <div>${missingHTML}</div>
+          </div>
+
+          <div class="skill-section">
+            <div class="skill-section-label label-extra">
+              + Bonus Skills (not in JD)
+              <span class="count-pill">${extra.length}</span>
+            </div>
+            <div>${extraHTML}</div>
+          </div>
+
+        </div>
+
+        ${r.suggestions && r.suggestions.length > 0 ? `
+        <div class="suggestions-row">
+          <div class="suggestions-title">💡 NLP Suggestions to Improve Resume</div>
+          ${r.suggestions.map(s => `
+            <div class="suggestion-item priority-${s.priority}">
+              <div class="suggestion-icon">${s.type === 'skill_gap' ? '🎯' : s.type === 'quantification' ? '📊' : s.type === 'language' ? '✍️' : s.type === 'structure' ? '🗂️' : s.type === 'keywords' ? '🔍' : s.type === 'alignment' ? '⚡' : '💡'}</div>
+              <div class="suggestion-body">
+                <div class="suggestion-title">${escHtml(s.title)}</div>
+                <div class="suggestion-detail">${escHtml(s.detail)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>` : ''}
+      `;
+
+      cardsDiv.appendChild(card);
+    });
+
+    // Animate all bars
+    setTimeout(() => {
+      document.querySelectorAll('.score-bar, .coverage-bar').forEach(bar => {
+        bar.style.width = bar.dataset.target + '%';
+      });
+    }, 100);
+
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* Toggle gap analysis panel */
+  function toggleDetail(btn) {
+    const panel = btn.nextElementSibling;
+    const open  = panel.style.display === 'block';
+    panel.style.display = open ? 'none' : 'block';
+    btn.innerHTML = open ? '&#9660; Show gap analysis' : '&#9650; Hide gap analysis';
+  }
+
+  /* Wrap matched skill in context snippet with <em> highlight */
+  function highlightSkillInContext(ctx, skill) {
+    const re = new RegExp('(' + skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return ctx.replace(re, '<em>$1</em>');
+  }
+
+  /* ── Helpers ─────────────────────────────────────────────────────── */
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'block' : 'none';
+    document.getElementById('submit-btn').disabled = show;
+    document.getElementById('submit-btn').textContent = show ? 'Processing…' : '⚡ Screen Resumes';
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('error-box');
+    box.textContent = '⚠ ' + msg;
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function clearError() {
+    const box = document.getElementById('error-box');
+    box.style.display = 'none';
+    box.textContent = '';
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+
+</body>
+</html>

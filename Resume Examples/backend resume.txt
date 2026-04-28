@@ -1,0 +1,10 @@
+Backend Engineer with 3+ years of experience building scalable systems.
+
+Skills:
+Python, Flask, Django, REST APIs, PostgreSQL, Docker, AWS
+
+Experience:
+- Designed and deployed REST APIs using Flask and Django
+- Worked with PostgreSQL databases
+- Containerized applications using Docker
+- Deployed services on AWS cloud

@@ -1,0 +1,14 @@
+We are looking for a Data Engineer with experience in building scalable data pipelines and working with large datasets.
+
+Responsibilities:
+- Design and build ETL pipelines
+- Work with batch and real-time data processing systems
+- Optimize data workflows for performance
+- Collaborate with data scientists and analysts
+
+Requirements:
+- Strong proficiency in Python and SQL
+- Experience with AWS or GCP cloud platforms
+- Experience with Apache Spark and Airflow
+- Knowledge of Docker and Kubernetes
+- Familiarity with Kafka or real-time streaming systems

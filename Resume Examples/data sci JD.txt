@@ -1,0 +1,8 @@
+We are hiring a Data Scientist with experience in machine learning and data analysis.
+
+Requirements:
+- Strong Python and SQL skills
+- Experience with machine learning libraries like scikit-learn or TensorFlow
+- Experience in data visualization (Matplotlib, Seaborn)
+- Knowledge of statistics and predictive modeling
+- Experience with big data tools is a plus

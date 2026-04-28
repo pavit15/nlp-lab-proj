@@ -1,0 +1,15 @@
+Data Engineer with 3+ years of experience building scalable data pipelines and working with large datasets.
+
+Skills:
+Python, SQL, AWS, GCP, Docker, Kubernetes, Apache Spark, Airflow, Kafka
+
+Experience:
+- Designed and built ETL pipelines using Python and SQL
+- Worked with both batch and real-time data processing systems
+- Optimized data workflows for performance and scalability
+- Collaborated with data scientists and analysts
+- Experience with AWS and GCP cloud platforms
+- Built real-time streaming systems using Kafka
+- Used Apache Spark for large-scale data processing
+- Managed workflows using Airflow
+- Deployed applications using Docker and Kubernetes

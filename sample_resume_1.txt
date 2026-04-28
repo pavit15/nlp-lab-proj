@@ -1,0 +1,35 @@
+John Doe
+Email: johndoe@email.com | Phone: +91-9876543210 | GitHub: github.com/johndoe
+
+SUMMARY
+Motivated Python developer with 2 years of experience in machine learning, data science, and web development.
+Passionate about building intelligent systems and solving real-world problems using NLP and deep learning.
+
+SKILLS
+Programming Languages: Python, JavaScript, SQL, HTML, CSS
+Frameworks & Libraries: Flask, Django, scikit-learn, TensorFlow, Pandas, NumPy, NLTK
+Databases: MySQL, PostgreSQL, MongoDB
+Tools: Git, Docker, Linux, Jupyter Notebook
+Soft Skills: Communication, Teamwork, Problem Solving, Agile, Scrum
+
+EDUCATION
+B.Tech in Computer Science Engineering | XYZ University | 2020-2024 | CGPA: 8.7/10
+
+EXPERIENCE
+Machine Learning Intern | TechCorp Pvt Ltd | June 2023 – Aug 2023
+- Built a text classification model using TF-IDF and Logistic Regression (accuracy: 91%)
+- Developed a Flask REST API to serve the ML model for real-time predictions
+- Preprocessed 50,000+ customer reviews using NLTK (tokenization, stopword removal, lemmatization)
+
+PROJECTS
+1. Sentiment Analysis Web App
+   - Used scikit-learn TF-IDF + Naive Bayes for tweet sentiment classification
+   - Built Flask backend and deployed on Heroku
+
+2. Resume Screening System
+   - NLP pipeline: tokenization, TF-IDF vectorization, cosine similarity ranking
+   - Python + Flask + HTML/CSS frontend
+
+CERTIFICATIONS
+- Machine Learning by Andrew Ng (Coursera)
+- Python for Data Science (IBM, Coursera)

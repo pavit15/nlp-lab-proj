@@ -1,0 +1,9 @@
+Data Scientist with 2 years of experience in machine learning and analytics.
+
+Skills:
+Python, SQL, scikit-learn, TensorFlow, Matplotlib, statistics
+
+Experience:
+- Built predictive models using scikit-learn
+- Analyzed datasets using Python and SQL
+- Created visualizations using Matplotlib and Seaborn
